@@ -24,6 +24,7 @@ ATTRIBUTION = "Powered by SRP Energy"
 DEFAULT_NAME = "SRP Energy"
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=1440)
 ENERGY_KWH = ENERGY_KILO_WATT_HOUR
+CONF_TOU = "tou"
 
 ATTR_READING_COST = "reading_cost"
 ATTR_READING_TIME = "datetime"
@@ -37,6 +38,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PASSWORD): cv.string,
         vol.Required(CONF_ID): cv.string,
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_TOU, default=False): cv.boolean
     }
 )
 
@@ -122,10 +124,11 @@ class SrpEnergy(Entity):
         """Get the latest usage from SRP Energy."""
         start_date = datetime.now() + timedelta(days=-1)
         end_date = datetime.now()
+        tou = config[CONF_TOU]
 
         try:
 
-            usage = self._client.usage(start_date, end_date)
+            usage = self._client.usage(start_date, end_date, tou)
 
             daily_usage = 0.0
             for _, _, _, kwh, _ in usage:
