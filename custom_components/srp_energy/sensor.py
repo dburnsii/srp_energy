@@ -49,6 +49,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     username = config[CONF_USERNAME]
     password = config[CONF_PASSWORD]
     account_id = config[CONF_ID]
+    tou = config[CONF_TOU]
 
     from srpenergy.client import SrpEnergyClient
 
@@ -58,19 +59,20 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error("Couldn't connect to %s. Check credentials", name)
         return
 
-    add_entities([SrpEnergy(name, srp_client)], True)
+    add_entities([SrpEnergy(name, srp_client, tou)], True)
 
 
 class SrpEnergy(Entity):
     """Representation of an srp usage."""
 
-    def __init__(self, name, client):
+    def __init__(self, name, client, tou):
         """Initialize SRP Usage."""
         self._state = None
         self._name = name
         self._client = client
         self._history = None
         self._usage = None
+        self._tou = tou
 
     @property
     def attribution(self):
@@ -124,11 +126,10 @@ class SrpEnergy(Entity):
         """Get the latest usage from SRP Energy."""
         start_date = datetime.now() + timedelta(days=-1)
         end_date = datetime.now()
-        tou = config[CONF_TOU]
 
         try:
 
-            usage = self._client.usage(start_date, end_date, tou)
+            usage = self._client.usage(start_date, end_date, self._tou)
 
             daily_usage = 0.0
             for _, _, _, kwh, _ in usage:
